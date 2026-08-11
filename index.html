@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaxtSMP</title>
+<style>
+  :root{
+    --void: #0a0716;
+    --end-purple: #6a3fb5;
+    --end-purple-bright: #9b6fe0;
+    --portal-magenta: #8a4fd1;
+    --end-yellow: #e8d34a;
+    --end-yellow-bright: #f5e572;
+    --endstone-cream: #e8dfc3;
+    --text-dim: #b3a8c9;
+    --panel-bg: rgba(20,14,36,0.7);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html,body{
+    background: var(--void);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    min-height:100%;
+    color: var(--endstone-cream);
+  }
+
+  body{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    position:relative;
+    min-height:100vh;
+    padding-bottom: 40px;
+  }
+
+  .stars{
+    position:fixed;
+    inset:0;
+    background-image:
+      radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 60% 10%, #fff, transparent),
+      radial-gradient(2px 2px at 80% 60%, #f5e572, transparent),
+      radial-gradient(1px 1px at 30% 80%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 90% 30%, #d9c9ff, transparent),
+      radial-gradient(1px 1px at 45% 55%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 15% 65%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 85%, #fff, transparent);
+    opacity:0.6;
+    z-index:0;
+    pointer-events:none;
+  }
+
+  .void-glow{
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(ellipse 60% 30% at 50% 0%, rgba(106,63,181,0.3), transparent 60%),
+      radial-gradient(ellipse 45% 35% at 85% 15%, rgba(232,211,74,0.1), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 90%, rgba(138,79,209,0.12), transparent 60%);
+    z-index:0;
+    pointer-events:none;
+  }
+
+  /* ===== BANNER + ICON (icon sits ON TOP of banner, centered) ===== */
+  .hero{
+    position:relative;
+    width:100%;
+    max-width: 900px;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .banner{
+    width:100%;
+    height: 240px;
+    object-fit: cover;
+    display:block;
+    border-bottom: 1px solid rgba(155,111,224,0.4);
+    filter: saturate(1.15) contrast(1.05);
+  }
+
+  .banner-fade{
+    position:absolute;
+    inset:0;
+    background:
+      linear-gradient(180deg, rgba(10,7,22,0) 30%, var(--void) 100%),
+      radial-gradient(ellipse 40% 60% at 50% 50%, rgba(10,7,22,0.15), transparent 70%);
+  }
+
+  .icon-frame{
+    position:absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 108px;
+    height: 108px;
+    border-radius: 22px;
+    border: 3px solid var(--end-yellow);
+    box-shadow: 0 0 30px rgba(232,211,74,0.6), 0 0 60px rgba(138,79,209,0.5), inset 0 0 20px rgba(138,79,209,0.3);
+    overflow:hidden;
+    background: linear-gradient(160deg, #241a3a, #120c22);
+    z-index:3;
+  }
+  .icon-frame img{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+  .icon-fallback{
+    width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:2.2rem;
+    color: var(--end-yellow);
+  }
+
+  /* ===== CONTENT ===== */
+  .content{
+    position:relative;
+    z-index:2;
+    max-width: 620px;
+    width:100%;
+    padding: 40px 24px 0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  h1{
+    font-size: clamp(1.9rem, 7vw, 2.6rem);
+    letter-spacing: 0.08em;
+    text-align:center;
+    background: linear-gradient(135deg, var(--end-yellow-bright), var(--endstone-cream) 55%, var(--end-purple-bright));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 18px rgba(155,111,224,0.6));
+    font-weight:normal;
+    margin-bottom: 14px;
+  }
+
+  .online-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding: 8px 18px;
+    border-radius: 30px;
+    background: rgba(106,63,181,0.18);
+    border: 1px solid rgba(232,211,74,0.4);
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 30px;
+  }
+
+  .online-dot{
+    width:9px; height:9px;
+    border-radius:50%;
+    background: var(--end-yellow);
+    box-shadow: 0 0 8px var(--end-yellow);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  .online-dot.offline{
+    background:#ff6e6e;
+    box-shadow: 0 0 8px #ff6e6e;
+    animation:none;
+  }
+  @keyframes pulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity:0.4; }
+  }
+
+  .online-count{ color: var(--end-yellow-bright); font-weight:bold; }
+  .online-max{ color: var(--text-dim); }
+
+  .description{
+    text-align:center;
+    color: var(--text-dim);
+    font-size: 1rem;
+    line-height:1.75;
+    margin-bottom: 44px;
+    max-width: 520px;
+  }
+  .description strong{ color: var(--end-yellow-bright); font-weight:normal; }
+
+  /* ===== ACTION PANEL ===== */
+  .action-panel{
+    width:100%;
+    background: var(--panel-bg);
+    border: 1px solid rgba(155,111,224,0.4);
+    border-radius: 14px;
+    padding: 26px 22px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 30px rgba(106,63,181,0.15);
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    align-items:center;
+  }
+
+  .connect-btn{
+    width:100%;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(232,211,74,0.25), rgba(106,63,181,0.4));
+    border: 1px solid var(--end-yellow);
+    border-radius: 10px;
+    color: var(--endstone-cream);
+    font-family:inherit;
+    font-size: 1.05rem;
+    letter-spacing: 0.05em;
+    cursor:pointer;
+    transition: all 0.3s ease;
+  }
+  .connect-btn:hover{
+    box-shadow: 0 0 25px rgba(232,211,74,0.4);
+    transform: translateY(-2px);
+  }
+
+  .social-row{
+    display:flex;
+    gap:16px;
+    width:100%;
+    justify-content:center;
+  }
+
+  .social-btn{
+    flex:1;
+    max-width: 140px;
+    aspect-ratio: 1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    background: rgba(106,63,181,0.15);
+    border: 1px solid rgba(155,111,224,0.4);
+    border-radius: 20px;
+    color: var(--endstone-cream);
+    text-decoration:none;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+    transition: all 0.3s ease;
+  }
+  .social-btn:hover{
+    background: rgba(232,211,74,0.15);
+    border-color: var(--end-yellow);
+    box-shadow: 0 0 20px rgba(232,211,74,0.35);
+    transform: translateY(-3px);
+  }
+  .social-btn svg{ width:30px; height:30px; }
+
+  footer{
+    position:relative;
+    z-index:2;
+    margin-top: 40px;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    opacity:0.5;
+    letter-spacing: 0.1em;
+    text-align:center;
+  }
+
+  /* ===== MODAL ===== */
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background: rgba(5,3,15,0.75);
+    backdrop-filter: blur(4px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index: 50;
+    padding: 20px;
+  }
+  .modal-overlay.open{ display:flex; }
+
+  .modal{
+    background: linear-gradient(160deg, rgba(30,20,50,0.95), rgba(15,10,28,0.95));
+    border: 1px solid var(--end-yellow);
+    border-radius: 16px;
+    max-width: 420px;
+    width:100%;
+    padding: 30px 26px;
+    box-shadow: 0 0 50px rgba(155,111,224,0.4);
+    position:relative;
+  }
+
+  .modal-close{
+    position:absolute;
+    top:16px; right:18px;
+    background:none;
+    border:none;
+    color: var(--text-dim);
+    font-size:1.3rem;
+    cursor:pointer;
+    line-height:1;
+  }
+  .modal-close:hover{ color: var(--end-yellow-bright); }
+
+  .modal h2{
+    font-weight:normal;
+    font-size: 1.4rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+    color: var(--end-yellow-bright);
+    text-shadow: 0 0 15px rgba(232,211,74,0.5);
+  }
+
+  .modal p{
+    color: var(--text-dim);
+    font-size: 0.92rem;
+    line-height:1.6;
+    margin-bottom: 24px;
+  }
+
+  .modal-actions{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .modal-btn{
+    display:block;
+    text-align:center;
+    padding: 14px;
+    border-radius: 10px;
+    text-decoration:none;
+    font-size: 0.95rem;
+    letter-spacing:0.04em;
+    transition: all 0.3s ease;
+    cursor:pointer;
+    border:none;
+    font-family:inherit;
+  }
+
+  .modal-btn.primary{
+    background: linear-gradient(135deg, var(--end-yellow), var(--end-purple));
+    color: #1a1330;
+    font-weight:bold;
+  }
+  .modal-btn.primary:hover{ box-shadow: 0 0 25px rgba(232,211,74,0.5); }
+
+  .modal-btn.secondary{
+    border: 1px solid rgba(155,111,224,0.5);
+    color: var(--endstone-cream);
+    background:none;
+    width:100%;
+  }
+  .modal-btn.secondary:hover{ border-color: var(--end-yellow); background: rgba(232,211,74,0.08); }
+
+  @media (max-width: 480px){
+    .banner{ height:180px; }
+    .icon-frame{ width:88px; height:88px; }
+    .content{ padding-top:34px; }
+    .social-btn{ max-width:120px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="stars"></div>
+  <div class="void-glow"></div>
+
+  <div class="hero">
+    <!-- Замени src на свой баннер -->
+    <img class="banner" src="banner.jpg" alt="PaxtSMP баннер" onerror="this.style.background='linear-gradient(135deg,#241a3a,#0a0716)'">
+    <div class="banner-fade"></div>
+    <div class="icon-frame">
+      <!-- Замени src на свою иконку -->
+      <img src="icon.png" alt="PaxtSMP" onerror="this.outerHTML='<div class=&quot;icon-fallback&quot;>◆</div>'">
+    </div>
+  </div>
+
+  <main class="content">
+
+    <h1>PaxtSMP</h1>
+
+    <div class="online-badge">
+      <span class="online-dot" id="online-dot"></span>
+      <span id="online-text">Загрузка...</span>
+    </div>
+
+    <p class="description">
+      Выживание за <strong>краем известного мира</strong>. Спокойный ванильный SMP,
+      с адекватным комьюнити и территориями под защитой.
+      Заходи, обживайся, строй — Край ждёт своих странников.
+    </p>
+
+    <div class="action-panel">
+      <button class="connect-btn" onclick="openModal()">Как подключиться</button>
+      <div class="social-row">
+        <a href="https://www.tiktok.com/@paxtsmp" target="_blank" class="social-btn">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M32 6c1.2 5 4.6 8.3 9.6 8.7v6.1c-3.4.2-6.4-.8-9.6-2.8v13.6c0 7.6-6.2 13.2-13.4 12.9C11.9 44.2 6.4 38.6 6.4 32c0-6.9 5.9-12.5 12.9-12.9.9 0 1.8 0 2.6.2v6.5c-.8-.3-1.7-.4-2.6-.4-3.6 0-6.5 2.9-6.5 6.6 0 3.6 2.9 6.5 6.6 6.5 3.6 0 6.6-2.9 6.6-6.6V6H32z" fill="#e8dfc3"/></svg>
+          TikTok
+        </a>
+        <a href="https://discord.gg/Zcd5PDQxZ" target="_blank" class="social-btn">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M40 12.5c-3-1.4-6.2-2.4-9.6-2.9-.4.8-.9 1.8-1.2 2.6-3.5-.5-7.1-.5-10.6 0-.3-.8-.7-1.8-1.2-2.6-3.4.5-6.6 1.5-9.6 2.9C2.4 20 1.1 27.3 1.7 34.5c4 3 7.9 4.8 11.7 6 1-1.3 1.8-2.7 2.5-4.2-1.4-.5-2.7-1.1-3.9-1.9.3-.2.6-.5.9-.7 7.6 3.5 15.9 3.5 23.4 0 .3.2.6.5.9.7-1.2.8-2.5 1.4-3.9 1.9.7 1.5 1.5 2.9 2.5 4.2 3.8-1.2 7.7-3 11.7-6 .8-8.3-1.3-15.5-5.5-22zM17 29.8c-1.8 0-3.3-1.7-3.3-3.7 0-2 1.5-3.7 3.3-3.7 1.8 0 3.4 1.7 3.3 3.7 0 2-1.5 3.7-3.3 3.7zm14 0c-1.8 0-3.3-1.7-3.3-3.7 0-2 1.5-3.7 3.3-3.7 1.8 0 3.4 1.7 3.3 3.7 0 2-1.5 3.7-3.3 3.7z" fill="#e8dfc3"/></svg>
+          Discord
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>PaxtSMP · за пределами известных чанков</footer>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this) closeModal()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h2>Подключение к серверу</h2>
+      <p>Прежде чем зайти — ознакомься с правилами и получи IP в нашем Discord. Там же выдаётся вайтлист и происходит вся коммуникация с администрацией.</p>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="closeModal()">Понятно, ознакомлюсь в Discord</button>
+        <a href="https://discord.gg/ВАША_ССЫЛКА" target="_blank" class="modal-btn primary">Зайти в Discord</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(){ document.getElementById('modal-overlay').classList.add('open'); }
+    function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+
+    async function fetchOnline(){
+      const dot = document.getElementById('online-dot');
+      const text = document.getElementById('online-text');
+      try{
+        const res = await fetch('https://api.mcsrvstat.us/3/paxtsmp.mcsh.io');
+        const data = await res.json();
+        if(data.online){
+          dot.classList.remove('offline');
+          const online = data.players?.online ?? 0;
+          const max = data.players?.max ?? '?';
+          text.innerHTML = `<span class="online-count">${online}</span> / <span class="online-max">${max}</span> игроков онлайн`;
+        } else {
+          dot.classList.add('offline');
+          text.textContent = 'Сервер офлайн';
+        }
+      } catch(e){
+        dot.classList.add('offline');
+        text.textContent = 'Не удалось получить статус';
+      }
+    }
+
+    fetchOnline();
+    setInterval(fetchOnline, 60000);
+  </script>
+
+</body>
+</html>
